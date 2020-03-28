@@ -8,6 +8,13 @@ A continuación se muestra un ejemplo del uso de face-api.js
 
 [![Face Api](/readme_image/face-api.JPG)](readme_image/face-api.JPG)
 
+# Teconolgias usadas
+
+1. [React js](https://es.reactjs.org/)
+2. [Face-api.js documentación 1](https://justadudewhohacks.github.io/face-api.js) - [face-api.js documentacion 2](https://github.com/justadudewhohacks/face-api.js)
+3. [React-redux](https://www.youtube.com/watch?v=HhtqSwUgP1U&t=1875s)
+4. [Programacion funcional](https://medium.com/laboratoria-developers/introducci%C3%B3n-a-la-programaci%C3%B3n-funcional-en-javascript-parte-1-e0b1d0b2142e)
+
 
 # Versiones
 
