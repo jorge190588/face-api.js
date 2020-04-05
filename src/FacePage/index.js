@@ -24,28 +24,21 @@ class FacePage extends Component {
     async setVideoHandler(){
         if (this.isModelLoaded()!==undefined){
             try{
-                let result= await faceapi.detectSingleFace(this.props.video.current, this.props.detector_options).withFaceLandmarks();
+                let result= await faceapi.detectSingleFace(this.props.video.current, this.props.detector_options).withFaceLandmarks().withAgeAndGender();
 
                 if (result!==undefined){
-                    //console.log("face detected",result);
+                    console.log("face detected",result);
+                    //asignar punto del rostro(landmark) al canvas.
                     const dims = faceapi.matchDimensions(this.props.canvas.current, this.props.video.current, true);
                     const resizedResult = faceapi.resizeResults(result, dims);
                     faceapi.draw.drawDetections(this.props.canvas.current, resizedResult);
                     faceapi.draw.drawFaceLandmarks(this.props.canvas.current, resizedResult);
                     
-                    //ADD CANVAS
                     const currentCanvas = ReactDOM.findDOMNode(this.props.canvas.current);
                     var canvasElement = currentCanvas.getContext("2d");
-                    //ctx.lineTo(x,y);
-                    //ctx.stroke();
-                    canvasElement.fillStyle = 'rgb(255, 87, 51)';
-                    //ctx.fillRect(result.alignedRect.box.x, result.alignedRect.box.y, 100, 50);
-                    // jaw 0-16  left eyebrow  17-21 right eyebrow  22-26  nose 27-35  left eye 36-41  right eye 42-47 and mouth 48-67
-                     
-                    canvasElement.fillRect(result.landmarks.positions[this.state.positionIndex].x,
-                                 result.landmarks.positions[this.state.positionIndex].y, 
-                                 10, 10);
-                    canvasElement.closePath();
+                    this.addBoxIndexOfLandmark(canvasElement, result);
+                    this.addGenderAndAgeInformation(canvasElement,result);
+
                 }
             }catch(exception){
                 console.log(exception);
@@ -53,33 +46,53 @@ class FacePage extends Component {
         }
         setTimeout(() => this.setVideoHandler());
     }
-
+    addBoxIndexOfLandmark(canvasElement,result){
+        canvasElement.fillStyle = 'rgb(255, 87, 51)'; 
+        canvasElement.fillRect(result.landmarks.positions[this.state.positionIndex].x,
+                        result.landmarks.positions[this.state.positionIndex].y, 
+                        10, 10);
+        canvasElement.closePath();
+    }
+    
+    addGenderAndAgeInformation(canvasElement,result ){
+        // Edad y Sexo
+        canvasElement.font = "10px Comic Sans MS";
+        //canvasElement.font="30px Arial";
+        canvasElement.fillStyle = "red";
+        let positionX=result.landmarks.positions[8].x,
+            positionY=result.landmarks.positions[8].y+10,
+            gender=(result.gender)==="male" ? "Hombre" :"Mujer",
+            age="Edad: "+result.age.toFixed();
+        gender="Sexo: "+gender;
+        canvasElement.fillStyle = "black";
+        canvasElement.fillRect(positionX-45, positionY-12, 90, 35);
+        canvasElement.textAlign = "center";
+        canvasElement.fillStyle = "white";
+        canvasElement.fillText( gender, positionX,positionY );
+        canvasElement.fillText(age,positionX,positionY+15 );
+    }
     isModelLoaded(){
-        if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1){
-            return faceapi.nets.ssdMobilenetv1.params;
-        } 
-        if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR) {
-            return faceapi.nets.tinyFaceDetector.params;
-        }
+        if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1)       return faceapi.nets.ssdMobilenetv1.params;
+        if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR)    return faceapi.nets.tinyFaceDetector.params;
     }
 
     
     async componentDidMount() {
         console.log("height: "+window.screen.height+", width: "+window.screen.width);
         
+        // obtener parametros de configuracion y asignar el modelo que vamos a usar para reconocer rostros
         this.setDetectorOptions();
+        
         this.props.SET_VIDEO_HANDLER_IN_GAME_FACENET(this.setVideoHandler);
         
+        // asignar los archivos del model a face-api
         let modelFolder="/models";
         try{
             await faceapi.loadFaceLandmarkModel(modelFolder);
-            if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1){
-                await faceapi.nets.ssdMobilenetv1.loadFromUri(modelFolder);
-            }
-                
-            if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR) {
-                await faceapi.nets.tinyFaceDetector.load(modelFolder);
-            }
+            await faceapi.nets.ageGenderNet.loadFromUri(modelFolder);
+
+            if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1)       await faceapi.nets.ssdMobilenetv1.loadFromUri(modelFolder);    
+            if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR)    await faceapi.nets.tinyFaceDetector.load(modelFolder);
         }catch(exception){
             console.log("exception",exception);
         }        
@@ -90,6 +103,8 @@ class FacePage extends Component {
             inputSize= this.props.input_size,
             scoreThreshold= this.props.score_threshold;
 
+        // identificar el modelo previsamente entrenado para reconocer rostos.
+        // el modelo por defecto es tiny_face_detector
         let options= this.props.selected_face_detector === this.props.SSD_MOBILENETV1
           ? new faceapi.SsdMobilenetv1Options({ minConfidence })
           : new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold });
@@ -101,6 +116,7 @@ class FacePage extends Component {
             <div>
                 <Camera/>
                 <Canva/>
+                
                 <input type="number" 
                     style={{marginLeft:1000}} 
                     value={this.state.positionIndex} 
