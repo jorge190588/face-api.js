@@ -24,11 +24,9 @@ class FacePage extends Component {
     async setVideoHandler(){
         if (this.isModelLoaded()!==undefined){
             try{
-                let result= await faceapi.detectSingleFace(this.props.video.current, this.props.detector_options).withFaceLandmarks().withAgeAndGender();
-
+                let result= await faceapi.detectSingleFace(this.props.video.current, this.props.detector_options).withFaceLandmarks().withFaceExpressions().withAgeAndGender();
                 if (result!==undefined){
                     console.log("face detected",result);
-                    //asignar punto del rostro(landmark) al canvas.
                     const dims = faceapi.matchDimensions(this.props.canvas.current, this.props.video.current, true);
                     const resizedResult = faceapi.resizeResults(result, dims);
                     faceapi.draw.drawDetections(this.props.canvas.current, resizedResult);
@@ -37,7 +35,9 @@ class FacePage extends Component {
                     const currentCanvas = ReactDOM.findDOMNode(this.props.canvas.current);
                     var canvasElement = currentCanvas.getContext("2d");
                     this.addBoxIndexOfLandmark(canvasElement, result);
+                    this.addBackgroundInformation(canvasElement,result);
                     this.addGenderAndAgeInformation(canvasElement,result);
+                    this.addEmotionInformation(canvasElement,resizedResult, result);
 
                 }
             }catch(exception){
@@ -46,6 +46,7 @@ class FacePage extends Component {
         }
         setTimeout(() => this.setVideoHandler());
     }
+
     addBoxIndexOfLandmark(canvasElement,result){
         canvasElement.fillStyle = 'rgb(255, 87, 51)'; 
         canvasElement.fillRect(result.landmarks.positions[this.state.positionIndex].x,
@@ -54,6 +55,13 @@ class FacePage extends Component {
         canvasElement.closePath();
     }
     
+    addBackgroundInformation(canvasElement,result){
+        let positionX=result.landmarks.positions[8].x,
+            positionY=result.landmarks.positions[8].y+10;
+        canvasElement.fillStyle = "black";
+        canvasElement.fillRect(positionX-45, positionY-12, 90, 45);
+    }
+
     addGenderAndAgeInformation(canvasElement,result ){
         // Edad y Sexo
         canvasElement.font = "10px Comic Sans MS";
@@ -64,13 +72,32 @@ class FacePage extends Component {
             gender=(result.gender)==="male" ? "Hombre" :"Mujer",
             age="Edad: "+result.age.toFixed();
         gender="Sexo: "+gender;
-        canvasElement.fillStyle = "black";
-        canvasElement.fillRect(positionX-45, positionY-12, 90, 35);
+    
         canvasElement.textAlign = "center";
         canvasElement.fillStyle = "white";
         canvasElement.fillText( gender, positionX,positionY );
         canvasElement.fillText(age,positionX,positionY+15 );
     }
+
+    addEmotionInformation(canvasElement, resizedResult, result){
+        const expressions = resizedResult.expressions;
+        const maxValue = Math.max(...Object.values(expressions));
+        let emotion = Object.keys(expressions).filter(
+            item => expressions[item] === maxValue
+            );
+        emotion=emotion[0];
+        emotion= (emotion==="happy") ? "feliz": emotion;
+        emotion= (emotion==="neutral") ? "neutral": emotion;
+        emotion= (emotion==="angry") ? "enojado": emotion;
+        emotion= (emotion==="sad") ? "triste": emotion;
+        emotion= (emotion==="surprised") ? "sorprendido": emotion;
+        emotion= (emotion==="fearful") ? "temeroso": emotion;
+
+        let positionX=result.landmarks.positions[8].x,
+        positionY=result.landmarks.positions[8].y+10;
+        canvasElement.fillText( "Emocion: "+emotion, positionX,positionY+30 );
+    }
+    
     isModelLoaded(){
         if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1)       return faceapi.nets.ssdMobilenetv1.params;
         if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR)    return faceapi.nets.tinyFaceDetector.params;
@@ -90,7 +117,7 @@ class FacePage extends Component {
         try{
             await faceapi.loadFaceLandmarkModel(modelFolder);
             await faceapi.nets.ageGenderNet.loadFromUri(modelFolder);
-
+            await faceapi.nets.faceExpressionNet.loadFromUri(modelFolder);
             if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1)       await faceapi.nets.ssdMobilenetv1.loadFromUri(modelFolder);    
             if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR)    await faceapi.nets.tinyFaceDetector.load(modelFolder);
         }catch(exception){
