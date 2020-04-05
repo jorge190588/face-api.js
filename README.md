@@ -23,3 +23,4 @@ A continuación se muestra en la Tabla I el detalle de cada versión especifican
 | No. | Commit | Descripción |
 | ------ | ------ | ------ |
 | 1 | b41f54af4f0abbba29be612a6390ae5099f23f34  | Carga del modelo y reconocimiento facial |
+| 2 | f2d1707b9c1fb4f109d8a7056abe5fe111af77c1  | Reconocimiento de edad y sexo |
