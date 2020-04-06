@@ -16,6 +16,7 @@ class FacePage extends Component {
             authorized:false,
             checkAutorization:true,
             positionIndex:0,
+            imageFilter: new Image(),
         }
         this.setVideoHandler = this.setVideoHandler.bind(this);
         this.isModelLoaded =  this.isModelLoaded.bind(this);
@@ -26,7 +27,7 @@ class FacePage extends Component {
             try{
                 let result= await faceapi.detectSingleFace(this.props.video.current, this.props.detector_options).withFaceLandmarks().withFaceExpressions().withAgeAndGender();
                 if (result!==undefined){
-                    console.log("face detected",result);
+                    console.log("face detected",1);
                     const dims = faceapi.matchDimensions(this.props.canvas.current, this.props.video.current, true);
                     const resizedResult = faceapi.resizeResults(result, dims);
                     faceapi.draw.drawDetections(this.props.canvas.current, resizedResult);
@@ -34,11 +35,14 @@ class FacePage extends Component {
                     
                     const currentCanvas = ReactDOM.findDOMNode(this.props.canvas.current);
                     var canvasElement = currentCanvas.getContext("2d");
-                    this.addBoxIndexOfLandmark(canvasElement, result);
+                    this.addFilter(canvasElement, result);
+                    this.addBoxIndexOfLandmark(canvasElement, result.landmarks.positions[this.state.positionIndex]);
                     this.addBackgroundInformation(canvasElement,result);
                     this.addGenderAndAgeInformation(canvasElement,result);
                     this.addEmotionInformation(canvasElement,resizedResult, result);
-
+                    
+                }else{
+                    console.log("face detected",1);
                 }
             }catch(exception){
                 console.log(exception);
@@ -47,12 +51,13 @@ class FacePage extends Component {
         setTimeout(() => this.setVideoHandler());
     }
 
-    addBoxIndexOfLandmark(canvasElement,result){
+    addBoxIndexOfLandmark(canvasElement,landkmarkPosition){
+        let width=10, height=10;
+        canvasElement.setTransform(1, 0, 0, 1, 0, 0);
         canvasElement.fillStyle = 'rgb(255, 87, 51)'; 
-        canvasElement.fillRect(result.landmarks.positions[this.state.positionIndex].x,
-                        result.landmarks.positions[this.state.positionIndex].y, 
-                        10, 10);
+        canvasElement.fillRect(landkmarkPosition.x,landkmarkPosition.y, width,height);
         canvasElement.closePath();
+        canvasElement.setTransform(1, 0, 0, 1, 0, 0);
     }
     
     addBackgroundInformation(canvasElement,result){
@@ -98,6 +103,45 @@ class FacePage extends Component {
         canvasElement.fillText( "Emocion: "+emotion, positionX,positionY+30 );
     }
     
+    addFilter(canvasElement, result){
+        let startIndex=0, endIndex=16, ajustX=0, ajustY=20;
+        let positionX1=result.landmarks.positions[startIndex].x-ajustX,
+            positionY1=result.landmarks.positions[startIndex].y+ajustY,
+            positionX2=result.landmarks.positions[endIndex].x+ajustX,
+            positionY2=result.landmarks.positions[endIndex].y+ajustY,
+            m=((positionY2-positionY1)/(positionX2-positionX1))*100;
+
+        let width= positionX2-positionX1,
+            height=width*0.8;
+        
+        positionY1-=(height/4);
+        positionY2-=(height/4);
+
+        var TO_RADIANS = Math.PI/180,
+            angleInRad=(m/2.5)*TO_RADIANS;
+        console.log("TO_RADIANS",TO_RADIANS);     
+
+        canvasElement.setTransform(1, 0, 0, 1, 0, 0);
+        canvasElement.translate(positionX1 ,positionY1-50); 
+        canvasElement.rotate( angleInRad );    
+        canvasElement.drawImage(this.state.imageFilter,0,0,width,height);
+        /*canvasElement.translate(positionX1 ,positionY1) 
+        canvasElement.translate(1,0,0,0,positionX1+(width/2),positionY1); 
+        canvasElement.rotate(angleInRad);    */
+        //canvasElement.drawImage(this.state.imageFilter,0,0,width,height);
+        //canvasElement.restore();
+        canvasElement.setTransform(1, 0, 0, 1, 0, 0);
+        //this.rotateAndPaintImage(canvasElement, this.state.imageFilter, angleInRad, positionX1, positionY1,20,0 );
+    }
+
+    rotateAndPaintImage( context, image, angleInRad , positionX, positionY, axisX, axisY ) {
+        context.translate( positionX, positionY );
+        context.rotate( angleInRad );
+        context.drawImage( image, -axisX, -axisY );
+        context.rotate( -angleInRad );
+        context.translate( -positionX, -positionY );
+      }
+
     isModelLoaded(){
         if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1)       return faceapi.nets.ssdMobilenetv1.params;
         if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR)    return faceapi.nets.tinyFaceDetector.params;
@@ -120,6 +164,11 @@ class FacePage extends Component {
             await faceapi.nets.faceExpressionNet.loadFromUri(modelFolder);
             if (this.props.selected_face_detector === this.props.SSD_MOBILENETV1)       await faceapi.nets.ssdMobilenetv1.loadFromUri(modelFolder);    
             if (this.props.selected_face_detector === this.props.TINY_FACE_DETECTOR)    await faceapi.nets.tinyFaceDetector.load(modelFolder);
+
+            this.state.imageFilter.src = '/filter/sunglasses3.svg';
+            this.state.imageFilter.onload = function(){
+                console.log("image is loaded");
+            }
         }catch(exception){
             console.log("exception",exception);
         }        
@@ -143,7 +192,7 @@ class FacePage extends Component {
             <div>
                 <Camera/>
                 <Canva/>
-                
+
                 <input type="number" 
                     style={{marginLeft:1000}} 
                     value={this.state.positionIndex} 
