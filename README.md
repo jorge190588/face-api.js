@@ -33,3 +33,11 @@ A continuación se muestra en la Tabla I el detalle de cada versión especifican
 | 2 | f2d1707b9c1fb4f109d8a7056abe5fe111af77c1  | Reconocimiento de edad y sexo |
 | 3 | 1f5fe62747d30048d442289f1495869eac1034b7  | Reconocimiento de emoticones  |
 | 4 | 1f41fa0f818cb1f745cb0ebeb2bedbf40c2103fd  | Filtros en 2D usando lentes de sol  |
+
+
+# Sitios para descargar SVG
+
+En los ejemplos de este repositorio se incluyen archivos SVG, estos han sido descargados de los sitios siguientes:
+
+1. [svgrepo](https://www.svgrepo.com/vectors/hat/)
+2. [onlinewebfonts](https://www.onlinewebfonts.com/icon/search?q=sunglas)
