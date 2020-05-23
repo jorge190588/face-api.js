@@ -1,6 +1,19 @@
 # Face-api.js
 
-Face-api.js es una libreria usada para el reconocimiento de rostos en imagenes o videos, esta libreria se implementa puede ser implementada en una aplicación web o móvil.
+Face-api.js es una interfaz de programación de aplicaciones-API de reconocimiento facial de JavaScript para el navegador y nodejs implementados con tensorflow.js core (tensorflow / tfjs-core).   Haciendo uso de un navegador o explorador como Chrome, Internet Explorer, Mozilla, entre los principales, se puede detectar rostos en imagenes o videos.   Los videos pueden ser obtenidos de una URL o de la cámara web.  Su implementación se extiende a los dispositivos, computadoreas, iPad/Tablet y télefonos inteligentes.
+
+# Principales caracteristicas:
+1. Detección de rostros y puntos de referencia
+2. Reconocimiento de expresiones faciales
+3. Reconocimiento facial
+4. Video Face Tracking
+5. Webcam Face Tracking
+6. Webcam Reconocimiento de expresiones faciales
+7. BBT Face Landmark Detection
+8. BBT Similitud de cara
+9. Reconocimiento facial de BBT
+
+## Ejemplos de los resultados que podemos obtener.
 
 A continuación se muestra un ejemplo del uso de face-api.js
 
